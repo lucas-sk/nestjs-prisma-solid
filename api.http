@@ -1,0 +1,78 @@
+@host = http://localhost:3000
+@access_token = {{ authentication.response.body.access_token }}
+
+POST {{host}}/users
+Content-Type: application/json
+
+{
+  "name": "John Doe",
+  "email": "johndoe@mail.com",
+  "password": "123456"
+}
+
+###
+# @name authentication
+POST {{host}}/sessions
+Content-Type: application/json
+
+{
+  "email": "johndoe@mail.com",
+  "password": "123456"
+}
+
+###
+# @name createTask1
+###
+# @prompt title Your reference code display on webpage
+# @prompt description Your one-time password in your mailbox
+POST {{host}}/tasks
+Content-Type: application/json
+Authorization: Bearer {{access_token}}
+
+{
+  "title": "{{title}}",
+  "description": "{{description}}",
+  "category": "BUG",
+  "priority": "HIGH",
+  "status": "PROGRESS"
+}
+
+###
+# @name createTask2
+POST {{host}}/tasks
+Content-Type: application/json
+Authorization: Bearer {{access_token}}
+
+{
+  "creatorId": "{{ authentication.response.body.user.id }}",
+  "title": "title",
+  "description": "description",
+  "category": "BUG",
+  "priority": "HIGH",
+  "status": "PROGRESS"
+}
+
+###
+GET {{host}}/tasks/{{ createTask1.response.body.task.id }}
+Authorization: Bearer {{access_token}}
+###
+GET {{host}}/tasks/
+Authorization: Bearer {{access_token}}
+###
+GET {{host}}/tasks/created
+Authorization: Bearer {{access_token}}
+###
+GET {{host}}/tasks/assignee
+Authorization: Bearer {{access_token}}
+
+###
+PATCH {{host}}/tasks/{{ createTask1.response.body.task.id }}/complete
+Authorization: Bearer {{access_token}}
+###
+PATCH {{host}}/tasks/{{ createTask1.response.body.task.id }}/dependencies
+Content-Type: application/json
+Authorization: Bearer {{access_token}}
+
+{
+  "dependentTasks": ["{{ createTask1.response.body.task.id }}", "{{ createTask2.response.body.task.id }}"]
+}

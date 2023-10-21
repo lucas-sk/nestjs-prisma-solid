@@ -1,0 +1,87 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TaskType {
+  BUG
+  FEATURE
+  CHORE
+  TEST
+}
+
+enum TaskStatus {
+  TODO
+  PROGRESS
+  DONE
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  password  String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  createdTasks  Task[]    @relation("tasksCreatedBy")
+  assigneeTasks Task[]
+  taskLog       taskLog[]
+
+  @@map("users")
+}
+
+model Task {
+  id          String     @id @default(uuid())
+  title       String
+  description String?
+  deadline    DateTime   @map("due_date")
+  type        TaskType
+  status      TaskStatus @default(TODO)
+  priority    Priority
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+  startedAt   DateTime?  @map("started_at")
+  finishedAt  DateTime?  @map("finished_at")
+
+  assignee   User?   @relation(fields: [assigneeId], references: [id])
+  assigneeId String?
+
+  creator   User   @relation("tasksCreatedBy", fields: [creatorId], references: [id])
+  creatorId String
+
+  dependencies Task[]    @relation("dependencies")
+  Task         Task?     @relation("dependencies", fields: [taskId], references: [id])
+  taskId       String?
+  taskLog      taskLog[]
+
+  @@map("tasks")
+}
+
+model taskLog {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("created_at")
+
+  operation String
+
+  task   Task   @relation(fields: [taskId], references: [id])
+  taskId String
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  @@map("task_logs")
+}
